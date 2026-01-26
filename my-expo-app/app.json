@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "my-expo-app",
+    "slug": "my-expo-app",
+    "version": "1.0.0",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.carlosexpo.myapp",
+      "permissions": [
+        "AUDIO_FOCUS",
+        "FOREGROUND_SERVICE",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.21"
+          }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Permitir acceso a tu música",
+          "savePhotosPermission": "Permitir guardar música"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "android": {
+            "stayAwake": true
+          }
+        }
+      ]
+    ]
+  }
+}
