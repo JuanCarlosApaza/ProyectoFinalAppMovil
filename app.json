@@ -1,1 +1,0 @@
-{ "expo": { "name": "my-expo-app", "slug": "my-expo-app", "version": "1.0.0", "newArchEnabled": true, "android": { "package": "com.carlosexpo.myapp" }, "plugins": [["expo-build-properties", { "android": { "kotlinVersion": "2.0.21" } }]] } }

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "my-expo-app",
+    "name": "RosqMusic",
     "slug": "my-expo-app",
     "version": "1.0.0",
     "newArchEnabled": true,
@@ -9,7 +9,10 @@
       "permissions": [
         "AUDIO_FOCUS",
         "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "WAKE_LOCK",
         "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "READ_MEDIA_AUDIO"
       ]
     },
@@ -26,7 +29,8 @@
         "expo-media-library",
         {
           "photosPermission": "Permitir acceso a tu música",
-          "savePhotosPermission": "Permitir guardar música"
+          "savePhotosPermission": "Permitir guardar música",
+          "isAccessMediaLocationEnabled": true
         }
       ],
       [
@@ -36,7 +40,9 @@
             "stayAwake": true
           }
         }
-      ]
+      ],
+      "expo-asset",
+      "./plugins/withYouTubeDownloader"
     ]
   }
 }
