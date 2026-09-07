@@ -22,6 +22,4 @@ export const GRADIENTS: string[][] = [
 
 export const DB_NAME = 'beatbox.db';
 
-export const GROQ_MODEL = 'llama-3.3-70b-versatile';
-
 export const AUDIO_EXTENSIONS = /\.(mp3|wav|m4a|aac)$/i;

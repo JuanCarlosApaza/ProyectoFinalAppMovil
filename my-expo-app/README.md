@@ -72,7 +72,6 @@ Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
 ```env
 EXPO_PUBLIC_YOUTUBE_API_KEY=tu_youtube_api_key
 EXPO_PUBLIC_GENIUS_API_KEY=tu_genius_api_key
-EXPO_PUBLIC_GROQ_API_KEY=tu_groq_api_key
 ```
 
 #### YouTube Data API v3
@@ -89,14 +88,6 @@ EXPO_PUBLIC_GROQ_API_KEY=tu_groq_api_key
 2. Crea una cuenta o inicia sesión
 3. Crea una nueva API Client
 4. Copia el **Access Token** y agrégalo como `EXPO_PUBLIC_GENIUS_API_KEY`
-
-#### Groq API
-
-1. Ve a [https://console.groq.com](https://console.groq.com)
-2. Crea una cuenta o inicia sesión
-3. Ve a **API Keys** → **Create API Key**
-4. Copia la clave y agrégala como `EXPO_PUBLIC_GROQ_API_KEY`
-5. El modelo utilizado es **LLaMA 3.3 70B** (configurado en `src/constants/index.ts`)
 
 ### Estructura del proyecto
 
@@ -143,7 +134,7 @@ my-expo-app/
     │   ├── database.ts              # SQLite: álbumes, canciones
     │   ├── downloader.ts            # Puente al módulo nativo de descarga
     │   ├── genius.ts                # API de Genius: búsqueda de letras
-    │   ├── groq.ts                  # API Groq: metadatos + traducción
+    │   ├── translate.ts              # ML Kit: traducción offline
     │   └── youtube.ts               # YouTube Data API v3
     ├── types/
     │   └── index.ts                 # Interfaces y tipos TypeScript
@@ -273,7 +264,6 @@ Create a `.env` file in the project root with the following variables:
 ```env
 EXPO_PUBLIC_YOUTUBE_API_KEY=your_youtube_api_key
 EXPO_PUBLIC_GENIUS_API_KEY=your_genius_api_key
-EXPO_PUBLIC_GROQ_API_KEY=your_groq_api_key
 ```
 
 #### YouTube Data API v3
@@ -290,14 +280,6 @@ EXPO_PUBLIC_GROQ_API_KEY=your_groq_api_key
 2. Create an account or sign in
 3. Create a new API Client
 4. Copy the **Access Token** and add it as `EXPO_PUBLIC_GENIUS_API_KEY`
-
-#### Groq API
-
-1. Go to [https://console.groq.com](https://console.groq.com)
-2. Create an account or sign in
-3. Go to **API Keys** → **Create API Key**
-4. Copy the key and add it as `EXPO_PUBLIC_GROQ_API_KEY`
-5. The model used is **LLaMA 3.3 70B** (configured in `src/constants/index.ts`)
 
 ### Project Structure
 
@@ -344,7 +326,7 @@ my-expo-app/
     │   ├── database.ts              # SQLite: albums, songs
     │   ├── downloader.ts            # Bridge to native download module
     │   ├── genius.ts                # Genius API: lyrics search
-    │   ├── groq.ts                  # Groq API: metadata + translation
+    │   ├── translate.ts              # ML Kit: offline translation
     │   └── youtube.ts               # YouTube Data API v3
     ├── types/
     │   └── index.ts                 # TypeScript interfaces and types

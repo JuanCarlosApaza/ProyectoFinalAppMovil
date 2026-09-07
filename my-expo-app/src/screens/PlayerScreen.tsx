@@ -326,7 +326,7 @@ const PlayerScreen = () => {
 
             {/* LETRAS */}
             {modalType === 'letras' && (
-              <Lyrics nombreMusica={cleanFileName(currentSong.filename)} />
+              <Lyrics songId={currentSong.id} nombreMusica={cleanFileName(currentSong.filename)} />
             )}
 
             {/* ALBUMES */}
