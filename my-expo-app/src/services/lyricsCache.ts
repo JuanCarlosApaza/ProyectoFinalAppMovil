@@ -2,11 +2,16 @@ import { documentDirectory, readAsStringAsync, writeAsStringAsync, deleteAsync, 
 
 const CACHE_DIR = `${documentDirectory}lyrics/`;
 
+let dirExists = false;
+
 const ensureDir = async () => {
+  if (dirExists) return;
+  
   const dirInfo = await getInfoAsync(CACHE_DIR);
   if (!dirInfo.exists) {
     await makeDirectoryAsync(CACHE_DIR, { intermediates: true });
   }
+  dirExists = true;
 };
 
 const getFilePath = (songId: string): string => {

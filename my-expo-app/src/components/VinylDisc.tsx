@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Image,
@@ -14,32 +14,43 @@ import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
-// 1. Definimos la imagen por defecto
 const defaultImage = require('../../assets/g.jpg');
 
-const VinylDisc: React.FC = () => {
-  // El estado acepta tanto el número del require como el string de la URI
-  const [albumCover, setAlbumCover] = useState<any>(defaultImage);
-  const rotation = useRef(new Animated.Value(0)).current;
+interface VinylDiscProps {
+  isPlaying?: boolean;
+}
 
-  // 2. Función para formatear la fuente de la imagen correctamente
+const VinylDisc: React.FC<VinylDiscProps> = ({ isPlaying = true }) => {
+  const [albumCover, setAlbumCover] = React.useState<any>(defaultImage);
+  const rotation = useRef(new Animated.Value(0)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+
   const getImageSource = () => {
     if (typeof albumCover === 'string') {
       return { uri: albumCover };
     }
-    return albumCover; // Retorna el require (número) directamente
+    return albumCover;
   };
 
   useEffect(() => {
-    Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 4000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
-  }, []);
+    if (isPlaying) {
+      animationRef.current = Animated.loop(
+        Animated.timing(rotation, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      animationRef.current.start();
+    } else {
+      animationRef.current?.stop();
+    }
+
+    return () => {
+      animationRef.current?.stop();
+    };
+  }, [isPlaying, rotation]);
 
   const pickImage = async (): Promise<void> => {
     try {
@@ -69,7 +80,6 @@ const VinylDisc: React.FC = () => {
     outputRange: ['0deg', '360deg'],
   });
 
-  // --- CONFIGURACIÓN DE DIMENSIONES ---
   const ALBUM_SIZE = width * 0.62;
   const VINYL_SIZE = ALBUM_SIZE * 0.94;
   const OFFSET_RIGHT = ALBUM_SIZE * 0.45;
@@ -79,7 +89,6 @@ const VinylDisc: React.FC = () => {
       <View style={styles.centerStage}>
         <View style={{ width: ALBUM_SIZE + OFFSET_RIGHT, height: ALBUM_SIZE, justifyContent: 'center' }}>
           
-          {/* 1. DISCO DE VINILO (Capa inferior) */}
           <Animated.View
             style={[
               styles.vinylContainer,
@@ -92,7 +101,6 @@ const VinylDisc: React.FC = () => {
             ]}
           >
             <View style={styles.vinyl}>
-              {/* Surcos del disco */}
               {[...Array(8)].map((_, i) => (
                 <View 
                   key={i} 
@@ -107,7 +115,6 @@ const VinylDisc: React.FC = () => {
                 />
               ))}
               
-              {/* Centro del vinilo con la imagen */}
               <View style={[styles.vinylCenter, { width: VINYL_SIZE * 0.35, height: VINYL_SIZE * 0.35, borderRadius: 1000 }]}>
                 <Image 
                   source={getImageSource()} 
@@ -116,7 +123,6 @@ const VinylDisc: React.FC = () => {
                 <View style={styles.vinylHole} />
               </View>
 
-              {/* Reflejo de luz (Efecto Glint) */}
               <LinearGradient
                 colors={['transparent', 'rgba(255,255,255,0.05)', 'transparent']}
                 style={[StyleSheet.absoluteFillObject, { borderRadius: 1000 }]}
@@ -126,7 +132,6 @@ const VinylDisc: React.FC = () => {
             </View>
           </Animated.View>
 
-          {/* 2. CARÁTULA DEL ÁLBUM (Capa superior) */}
           <TouchableOpacity 
             onPress={pickImage} 
             activeOpacity={0.9} 
@@ -225,4 +230,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default VinylDisc;
+export default React.memo(VinylDisc);

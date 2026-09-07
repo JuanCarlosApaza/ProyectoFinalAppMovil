@@ -13,6 +13,7 @@ import AlbumsScreen from '@/screens/AlbumsScreen';
 import { AudioProvider } from '@/context/AudioContext';
 import LoadingScreen from '@/components/Loading';
 import { COLORS } from '@/constants';
+import { slideUpTransition } from '@/navigation/transitions';
 import './global.css';
 
 const navTheme = {
@@ -40,7 +41,14 @@ export default function App() {
                     screenOptions={{ headerShown: false }}
                   >
                     <Stack.Screen name="Library" component={LibraryScreen} />
-                    <Stack.Screen name="Player" component={PlayerScreen} />
+                    <Stack.Screen 
+                      name="Player" 
+                      component={PlayerScreen}
+                      options={{
+                        cardStyleInterpolator: slideUpTransition,
+                        cardStyle: { backgroundColor: 'transparent' },
+                      }}
+                    />
                     <Stack.Screen name="Search" component={SearchScreen} />
                     <Stack.Screen name="Albums" component={AlbumsScreen} />
                   </Stack.Navigator>

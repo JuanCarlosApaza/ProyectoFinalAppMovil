@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, InteractionManager, ActivityIndicator } from 'react-native';
 import { FlashList } from "@shopify/flash-list";
 import { Search, RefreshCw, Music2 } from 'lucide-react-native';
@@ -16,8 +16,9 @@ const LibraryScreen = () => {
     const [songs, setSongs] = useState<Song[]>([]);
     const [search, setSearch] = useState('');
     const [isReady, setIsReady] = useState(false);
+    const songsRef = useRef<Song[]>([]);
 
-    const scanMusic = async () => {
+    const scanMusic = useCallback(async () => {
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status === 'granted') {
             const media = await MediaLibrary.getAssetsAsync({
@@ -25,16 +26,17 @@ const LibraryScreen = () => {
                 sortBy: 'modificationTime',
                 first: 1000,
             });
+            songsRef.current = media.assets;
             setSongs(media.assets);
         }
-    };
+    }, []);
 
     useEffect(() => {
         const task = InteractionManager.runAfterInteractions(() => {
             scanMusic().then(() => setIsReady(true));
         });
         return () => task.cancel();
-    }, []);
+    }, [scanMusic]);
 
     const filteredSongs = useMemo(() => {
         if (!search) return songs;
@@ -46,10 +48,10 @@ const LibraryScreen = () => {
         <SongItem
             track={item}
             isCurrent={currentSong?.id === item.id}
-            onPress={() => playSound(item, filteredSongs)}
+            onPress={() => playSound(item, songsRef.current)}
             formatTime={formatDuration}
         />
-    ), [currentSong?.id, filteredSongs]);
+    ), [currentSong?.id, playSound]);
 
     return (
         <View className="flex-1 bg-black">

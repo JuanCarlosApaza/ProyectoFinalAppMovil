@@ -76,7 +76,7 @@ const PlayerScreen = () => {
     playNext,
     playPrevious,
   } = useAudio()!;
-  const { playbackStatus } = usePlaybackStatus()!;
+  const { positionMillis, durationMillis } = usePlaybackStatus()!;
 
   const [albumName, setAlbumName] = useState('');
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -84,7 +84,7 @@ const PlayerScreen = () => {
   const [modalType, setModalType] = useState<'lista' | 'letras' | 'albumes'>('lista');
 
   useEffect(() => {
-    if (modalType === 'albumes') {
+    if (modalType === 'albumes' && modalVisible) {
       const result = getAllAlbums();
       setAlbums(result as Album[]);
     }
@@ -98,8 +98,8 @@ const PlayerScreen = () => {
     }
   }, [route.params?.song]);
 
-  const position = playbackStatus?.positionMillis || 0;
-  const duration = playbackStatus?.durationMillis || 0;
+  const position = positionMillis || 0;
+  const duration = durationMillis || 0;
 
   const handleAddSongToAlbum = useCallback((albumId: number) => {
     if (!currentSong?.id) {
@@ -175,7 +175,7 @@ const PlayerScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <VinylDisc />
+      <VinylDisc isPlaying={isPlaying} />
 
       {/* INFO CANCIÓN */}
       <View className="mb-8 items-start">

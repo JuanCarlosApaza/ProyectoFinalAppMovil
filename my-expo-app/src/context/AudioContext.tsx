@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
+import { Audio, AVPlaybackStatus, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
+import type { Song } from '@/types';
 
 interface AudioColdContextValue {
-  currentSong: any | null;
-  allSongs: any[];
+  currentSong: Song | null;
+  allSongs: Song[];
   isPlaying: boolean;
   isShuffle: boolean;
   repeatMode: 'off' | 'all' | 'one';
-  playSound: (song: any, list: any[]) => void;
+  playSound: (song: Song, list: Song[]) => void;
   playNext: () => void;
   playPrevious: () => void;
   togglePlayPause: () => void;
@@ -17,19 +18,26 @@ interface AudioColdContextValue {
 }
 
 interface AudioHotContextValue {
-  playbackStatus: any;
+  positionMillis: number;
+  durationMillis: number;
+  isBuffering: boolean;
 }
 
 const AudioColdContext = createContext<AudioColdContextValue | null>(null);
 const AudioHotContext = createContext<AudioHotContextValue | null>(null);
 
 export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
-  const [currentSong, setCurrentSong] = useState<any | null>(null);
-  const [allSongs, setAllSongs] = useState<any[]>([]);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackStatus, setPlaybackStatus] = useState<any>(null);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
+
+  const [hotState, setHotState] = useState<AudioHotContextValue>({
+    positionMillis: 0,
+    durationMillis: 0,
+    isBuffering: false,
+  });
 
   const soundRef = useRef<Audio.Sound | null>(null);
   const isLoadingRef = useRef(false);
@@ -37,6 +45,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const isShuffleRef = useRef(isShuffle);
   const allSongsRef = useRef(allSongs);
   const currentSongRef = useRef(currentSong);
+  const playNextRef = useRef<() => void>(() => {});
 
   useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
   useEffect(() => { isShuffleRef.current = isShuffle; }, [isShuffle]);
@@ -54,26 +63,24 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, []);
 
-  const playNext = useCallback(() => {
-    if (isLoadingRef.current) return;
-    const list = allSongsRef.current;
-    const current = currentSongRef.current;
-    if (!current || list.length === 0) return;
+  const computeNextSong = useCallback((list: Song[], current: Song | null): Song | null => {
+    if (!current || list.length === 0) return null;
 
-    let nextSong;
     if (isShuffleRef.current) {
-      const otherSongs = list.filter(s => s.id !== current.id);
-      nextSong = otherSongs[Math.floor(Math.random() * otherSongs.length)] || list[0];
-    } else {
-      const index = list.findIndex(s => s.id === current.id);
-      const isLast = index === list.length - 1;
-      nextSong = isLast ? (repeatModeRef.current === 'all' ? list[0] : null) : list[index + 1];
+      const others = list.filter(s => s.id !== current.id);
+      return others[Math.floor(Math.random() * others.length)] || list[0];
     }
 
-    if (nextSong) playSound(nextSong, list);
+    const index = list.findIndex(s => s.id === current.id);
+    const isLast = index === list.length - 1;
+
+    if (isLast) {
+      return repeatModeRef.current === 'all' ? list[0] : null;
+    }
+    return list[index + 1];
   }, []);
 
-  const playSound = useCallback(async (song: any, list: any[]) => {
+  const playSound = useCallback(async (song: Song, list: Song[]) => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
 
@@ -93,22 +100,30 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: song.uri },
-        { shouldPlay: true, progressUpdateIntervalMillis: 1000 }
+        { shouldPlay: true, progressUpdateIntervalMillis: 500 }
       );
 
       soundRef.current = sound;
       setIsPlaying(true);
 
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (!status.isLoaded) return;
-        setPlaybackStatus(status);
+      sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+        if (!status.isLoaded) {
+          setHotState(prev => ({ ...prev, isBuffering: true }));
+          return;
+        }
+
+        setHotState({
+          positionMillis: status.positionMillis,
+          durationMillis: status.durationMillis ?? 0,
+          isBuffering: status.isBuffering,
+        });
         setIsPlaying(status.isPlaying);
 
         if (status.didJustFinish && !status.isLooping) {
           if (repeatModeRef.current === 'one') {
             sound.replayAsync();
           } else {
-            playNext();
+            playNextRef.current();
           }
         }
       });
@@ -117,6 +132,18 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       isLoadingRef.current = false;
     }
+  }, []);
+
+  const playNext = useCallback(() => {
+    if (isLoadingRef.current) return;
+    const list = allSongsRef.current;
+    const current = currentSongRef.current;
+    const nextSong = computeNextSong(list, current);
+    if (nextSong) playSound(nextSong, list);
+  }, [computeNextSong, playSound]);
+
+  useEffect(() => {
+    playNextRef.current = playNext;
   }, [playNext]);
 
   const playPrevious = useCallback(() => {
@@ -158,13 +185,9 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     seekTo, toggleShuffle, toggleRepeat,
   ]);
 
-  const hotValue = useMemo<AudioHotContextValue>(() => ({
-    playbackStatus,
-  }), [playbackStatus]);
-
   return (
     <AudioColdContext.Provider value={coldValue}>
-      <AudioHotContext.Provider value={hotValue}>
+      <AudioHotContext.Provider value={hotState}>
         {children}
       </AudioHotContext.Provider>
     </AudioColdContext.Provider>

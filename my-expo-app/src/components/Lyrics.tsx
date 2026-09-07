@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform
 } from 'react-native';
@@ -11,6 +11,27 @@ interface Props {
   songId: string;
   nombreMusica: string;
 }
+
+const LyricsLine = React.memo(({ line, index }: { line: string; index: number }) => {
+  const trimmedLine = line.trim();
+  if (trimmedLine === "") return <View key={index} className="h-4" />;
+  
+  const isHeader = trimmedLine.startsWith('[') && trimmedLine.endsWith(']');
+  const isTranslation = trimmedLine.startsWith('»');
+
+  return (
+    <Text
+      key={index}
+      className={isHeader
+        ? "text-slate-500 text-[11px] font-black uppercase mt-4 mb-1"
+        : isTranslation
+        ? "text-indigo-400/90 text-[15px] italic mb-2"
+        : "text-slate-100 text-[17px] font-semibold leading-6"}
+    >
+      {isTranslation ? trimmedLine.replace('»', '').trim() : trimmedLine}
+    </Text>
+  );
+});
 
 const Lyrics = ({ songId, nombreMusica }: Props) => {
   const [loading, setLoading] = useState(false);
@@ -43,7 +64,7 @@ const Lyrics = ({ songId, nombreMusica }: Props) => {
     });
   }, [songId]);
 
-  const buscarLetra = async () => {
+  const buscarLetra = useCallback(async () => {
     if (!artista.trim() || !cancion.trim()) {
       setError('Escribe artista y canción.');
       return;
@@ -63,9 +84,9 @@ const Lyrics = ({ songId, nombreMusica }: Props) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [artista, cancion, songId]);
 
-  const traducirLetra = async () => {
+  const traducirLetra = useCallback(async () => {
     if (!originalLyrics || isTranslated) return;
     setLoading(true);
     try {
@@ -77,29 +98,13 @@ const Lyrics = ({ songId, nombreMusica }: Props) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [originalLyrics, isTranslated]);
 
   const lyricsLines = useMemo(() => {
     if (!lyrics) return null;
-    return lyrics.split('\n').map((line, index) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine === "") return <View key={index} className="h-4" />;
-      const isHeader = trimmedLine.startsWith('[') && trimmedLine.endsWith(']');
-      const isTranslation = trimmedLine.startsWith('»');
-
-      return (
-        <Text
-          key={index}
-          className={isHeader
-            ? "text-slate-500 text-[11px] font-black uppercase mt-4 mb-1"
-            : isTranslation
-            ? "text-indigo-400/90 text-[15px] italic mb-2"
-            : "text-slate-100 text-[17px] font-semibold leading-6"}
-        >
-          {isTranslation ? trimmedLine.replace('»', '').trim() : trimmedLine}
-        </Text>
-      );
-    });
+    return lyrics.split('\n').map((line, index) => (
+      <LyricsLine key={index} line={line} index={index} />
+    ));
   }, [lyrics]);
 
   return (
@@ -162,4 +167,4 @@ const Lyrics = ({ songId, nombreMusica }: Props) => {
   );
 };
 
-export default Lyrics;
+export default React.memo(Lyrics);
